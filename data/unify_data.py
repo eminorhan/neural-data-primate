@@ -42,7 +42,7 @@ if __name__ == '__main__':
             tx4.append(data['tx4'].squeeze())
             block_id.append(data['blockIdx'].squeeze())
             day_id.append(files_dict_for_day_id[file] * np.ones(data['blockIdx'].squeeze().shape, dtype=np.uint8))  # TODO: add error handling here
-            print('File idx, path:', file_idx, file_path)
+            print('File idx, path, n_trials:', file_idx, file_path, data['blockIdx'].squeeze().shape)
             file_idx += 1
 
     sentence = np.concatenate(sentence)

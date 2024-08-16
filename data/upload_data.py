@@ -9,7 +9,7 @@ api.upload_file(
     path_in_repo="train.npz",
     repo_id="eminorhan/speech-bci-willett",
     repo_type="dataset",
-    token='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'
+    token=''
 )
 
 api.upload_file(
@@ -17,7 +17,7 @@ api.upload_file(
     path_in_repo="test.npz",
     repo_id="eminorhan/speech-bci-willett",
     repo_type="dataset",
-    token='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'
+    token=''
 )
 
 api.upload_file(
@@ -25,5 +25,5 @@ api.upload_file(
     path_in_repo="val.npz",
     repo_id="eminorhan/speech-bci-willett",
     repo_type="dataset",
-    token='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'
+    token=''
 )
