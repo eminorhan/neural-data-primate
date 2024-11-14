@@ -8,6 +8,7 @@
 *.png
 *.sh
 *.mat
+*.nwb
 
 # Directories
 **/__pycache__
