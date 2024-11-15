@@ -37,7 +37,7 @@ if __name__ == '__main__':
             units = nwbfile.units.to_dataframe()
             kin = nwbfile.acquisition['OpenLoopKinematics'].data[:].T
             vel = nwbfile.acquisition['OpenLoopKinematicsVelocity'].data[:].T
-            timestamps = nwbfile.acquisition['OpenLoopKinematics'].offset + np.arange(kin.shape[0]) * nwbfile.acquisition['OpenLoopKinematics'].rate
+            timestamps = nwbfile.acquisition['OpenLoopKinematics'].offset + np.arange(kin.shape[-1]) * nwbfile.acquisition['OpenLoopKinematics'].rate
             blacklist = ~nwbfile.acquisition['eval_mask'].data[:].astype(bool)
             trials = nwbfile.acquisition['TrialNum'].data[:]
             labels = [l.strip() for l in nwbfile.acquisition['OpenLoopKinematics'].description.split(',')]
