@@ -1,14 +1,37 @@
 import os
 import argparse
 import numpy as np
-from scipy.io import loadmat
+from pynwb import NWBHDF5IO
 from datasets import Dataset
+
+
+_folder_mapping = {
+    'sub-T5-held-in-calib': 'in-calib',
+    'sub-T5-held-in-minival': 'in-minival',
+    'sub-T5-held-out-calib': 'out-calib'
+    }
+
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Consolidate data in multiple files into a single file', add_help=False)
-    parser.add_argument('--save_str', default='test', type=str, help='String identifier for file to be saved')
-    parser.add_argument('--data_dir', default='test', type=str, help='Data directory')
+    parser.add_argument('--data_dir',default="sub-T5-held-in-calib",type=str, help='Data directory')
     return parser
+
+
+def find_indices(time_stamps, start_times, stop_times):
+    # find the index of the closest time point in time_stamps
+    def find_closest(time_points, target_time):
+        # index of the closest time point in time_stamps
+        return np.argmin(np.abs(np.array(time_points) - target_time))
+    
+    # indices for start_times
+    start_indices = [find_closest(time_stamps, start_time) for start_time in start_times]
+    
+    # indices for stop_times
+    stop_indices = [find_closest(time_stamps, stop_time) for stop_time in stop_times]
+    
+    return start_indices, stop_indices
+
 
 if __name__ == '__main__':
 
@@ -16,73 +39,52 @@ if __name__ == '__main__':
     args = args.parse_args()
     print(args)
 
-    files = os.listdir(args.data_dir)
-    files.sort()
+    # get all .nwb files in the sorted folder
+    nwb_files = [f for f in sorted(os.listdir(args.data_dir)) if f.endswith('.nwb')]
+    print(f"Files: {nwb_files}")
 
-    # this dict is for registering the recording day across data set splits
-    files_dict_for_day_id = {
-        't5.2022.05.18.mat': 0, 
-        't5.2022.05.23.mat': 1, 
-        't5.2022.05.25.mat': 2, 
-        't5.2022.06.01.mat': 3, 
-        't5.2022.06.03.mat': 4, 
-        't5.2022.06.06.mat': 5, 
-        't5.2022.06.08.mat': 6, 
-        't5.2022.06.13.mat': 7, 
-        't5.2022.06.15.mat': 8, 
-        't5.2022.06.22.mat': 9, 
-        't5.2022.09.01.mat': 10,
-        't5.2022.09.29_n.mat': 11,
-        't5.2022.09.29_r.mat': 11,
-        't5.2022.10.06_n.mat': 12,
-        't5.2022.10.06_r.mat': 12,
-        't5.2022.10.18_n.mat': 13,
-        't5.2022.10.18_r.mat': 13,
-        't5.2022.10.25_n.mat': 14,
-        't5.2022.10.25_r.mat': 14,
-        't5.2022.10.27_n.mat': 15,
-        't5.2022.10.27_r.mat': 15,
-        't5.2022.11.01_n.mat': 16,
-        't5.2022.11.01_r.mat': 16,
-        't5.2022.11.03_n.mat': 17,
-        't5.2022.11.03_r.mat': 17,
-        't5.2022.12.08_n.mat': 18,
-        't5.2022.12.08_r.mat': 18,
-        't5.2022.12.15_n.mat': 19,
-        't5.2022.12.15_r.mat': 19,
-        't5.2023.02.28_n.mat': 20,
-        't5.2023.02.28_r.mat': 20
-        }
-    
-    file_idx = 0
-    sentences, tx_feats, block_ids, day_ids = [], [], [], []  # all data to be saved
+    # lists to store results for each session
+    block_nums_list, sentences_list, blacklist_list, timestamps_list, spike_counts_list, spike_counts_slices_list, identifier_list = [], [], [], [], [], [], []
 
-    for file in files:
-        if file.endswith('.mat'):
-            file_path = os.path.join(args.data_dir, file)
-            data = loadmat(file_path)
-            sentences.append(data['sentences'].squeeze())
-            tx_feats.append(data['tx_feats'].squeeze())
-            block_ids.append(data['blocks'].squeeze())
-            day_ids.append(files_dict_for_day_id[file] * np.ones(data['blocks'].squeeze().shape, dtype=np.uint8))  # TODO: add error handling here
-            print('File idx, path, n_trials:', file_idx, file_path, data['blocks'].squeeze().shape)
-            file_idx += 1
+    for file_name in nwb_files:
+        file_path = os.path.join(args.data_dir, file_name)
+        with NWBHDF5IO(file_path, "r") as io:
+            nwbfile = io.read()
+            trials = nwbfile.intervals['trials']
+            block_nums = nwbfile.intervals['trials']['block_num'].data[:]
+            sentences = nwbfile.intervals['trials']['cue'].data[:]
+            sentences = [s.replace('>', ' ').replace('~', '.') for s in sentences]
+            start_times = nwbfile.intervals['trials']['start_time'].data[:]
+            stop_times = nwbfile.intervals['trials']['stop_time'].data[:]
+            blacklist = ~nwbfile.acquisition['eval_mask'].data[:].astype(bool)
+            spike_counts = nwbfile.acquisition['binned_spikes'].data[:]
+            time_stamps = nwbfile.acquisition['binned_spikes'].timestamps[:]
+            start_indices, stop_indices = find_indices(time_stamps, start_times, stop_times)
+            spike_counts_slices = [spike_counts[start_index:stop_index, :] for start_index, stop_index in zip(start_indices, stop_indices)]
+            identifier = nwbfile.identifier
 
-    sentences = np.concatenate(sentences)
-    tx_feats = np.concatenate(tx_feats)
-    block_ids = np.concatenate(block_ids)
-    day_ids = np.concatenate(day_ids)
+            # append trials
+            block_nums_list.append(block_nums)
+            sentences_list.append(sentences)
+            blacklist_list.append(blacklist)
+            timestamps_list.append(time_stamps)
+            spike_counts_list.append(spike_counts)
+            spike_counts_slices_list.append(spike_counts_slices)
+            identifier_list.append(identifier)
 
     def gen_data():
-        for a, b, c, d in zip(sentences, tx_feats, block_ids, day_ids):
+        for a, b, c, d, e, f, g in zip(block_nums_list, sentences_list, blacklist_list, timestamps_list, spike_counts_list, spike_counts_slices_list, identifier_list):
             yield {
-                "sentence": a[0].replace('>', ' ').replace('~', '.'),
-                "tx_feat": b.astype(np.uint8),
-                "block_id": c[0][0],
-                "day_id": d
+                "block_nums": a,
+                "sentences": b,
+                "blacklist": c,
+                "timestamps": d,
+                "spike_counts": e,
+                "spike_counts_slices": f,
+                "identifier": g
                 }
 
     ds = Dataset.from_generator(gen_data)
         
     # push all data to hub under "all"
-    ds.push_to_hub("eminorhan/h2", split=args.save_str, token=True)
+    ds.push_to_hub("eminorhan/h2", _folder_mapping[os.path.basename(args.data_dir)], token=True)
