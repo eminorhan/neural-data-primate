@@ -14,7 +14,7 @@ _folder_mapping = {
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Consolidate data in multiple files into a single file', add_help=False)
-    parser.add_argument('--data_dir',default="sub-T5-held-in-calib",type=str, help='Data directory')
+    parser.add_argument('--data_dir',default="sub-T5-held-in-calib",type=str, choices=["sub-T5-held-in-calib", "sub-T5-held-in-minival", "sub-T5-held-out-calib"], help='Data directory')
     return parser
 
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     print(f"Files: {nwb_files}")
 
     # lists to store results for each session
-    block_nums_list, sentences_list, blacklist_list, timestamps_list, spike_counts_list, spike_counts_slices_list, identifier_list = [], [], [], [], [], [], []
+    block_nums_list, sentences_list, eval_mask_list, time_stamps_list, spike_counts_list, spike_counts_slices_list, identifier_list = [], [], [], [], [], [], []
 
     for file_name in nwb_files:
         file_path = os.path.join(args.data_dir, file_name)
@@ -56,7 +56,7 @@ if __name__ == '__main__':
             sentences = [s.replace('>', ' ').replace('~', '.') for s in sentences]
             start_times = nwbfile.intervals['trials']['start_time'].data[:]
             stop_times = nwbfile.intervals['trials']['stop_time'].data[:]
-            blacklist = ~nwbfile.acquisition['eval_mask'].data[:].astype(bool)
+            eval_mask = nwbfile.acquisition['eval_mask'].data[:].astype(bool)
             spike_counts = nwbfile.acquisition['binned_spikes'].data[:]
             time_stamps = nwbfile.acquisition['binned_spikes'].timestamps[:]
             start_indices, stop_indices = find_indices(time_stamps, start_times, stop_times)
@@ -66,19 +66,19 @@ if __name__ == '__main__':
             # append trials
             block_nums_list.append(block_nums)
             sentences_list.append(sentences)
-            blacklist_list.append(blacklist)
-            timestamps_list.append(time_stamps)
+            eval_mask_list.append(eval_mask)
+            time_stamps_list.append(time_stamps)
             spike_counts_list.append(spike_counts)
             spike_counts_slices_list.append(spike_counts_slices)
             identifier_list.append(identifier)
 
     def gen_data():
-        for a, b, c, d, e, f, g in zip(block_nums_list, sentences_list, blacklist_list, timestamps_list, spike_counts_list, spike_counts_slices_list, identifier_list):
+        for a, b, c, d, e, f, g in zip(block_nums_list, sentences_list, eval_mask_list, time_stamps_list, spike_counts_list, spike_counts_slices_list, identifier_list):
             yield {
                 "block_nums": a,
                 "sentences": b,
-                "blacklist": c,
-                "timestamps": d,
+                "eval_mask": c,
+                "time_stamps": d,
                 "spike_counts": e,
                 "spike_counts_slices": f,
                 "identifier": g
