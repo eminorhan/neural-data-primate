@@ -4,11 +4,19 @@ import numpy as np
 from scipy.io import loadmat
 from datasets import Dataset
 
+
+_folder_mapping = {
+    'train': 'train',
+    'test': 'test',
+    'validation': 'validation'
+    }
+
+
 def get_args_parser():
     parser = argparse.ArgumentParser('Consolidate data in multiple files into a single file', add_help=False)
-    parser.add_argument('--save_str', default='test', type=str, help='String identifier for file to be saved')
-    parser.add_argument('--data_dir', default='test', type=str, help='Data directory')
+    parser.add_argument('--data_dir', default='train', type=str, choices=['train', 'test', 'validation'], help='Data directory')
     return parser
+
 
 if __name__ == '__main__':
 
@@ -89,6 +97,6 @@ if __name__ == '__main__':
 
     ds = Dataset.from_generator(gen_data)
         
-    # push all data to hub under "all"
-    ds.push_to_hub("eminorhan/willett", split=args.save_str, token=True)
+    # push data to hub
+    ds.push_to_hub("eminorhan/willett", split=_folder_mapping[os.path.basename(args.data_dir)], token=True)
 

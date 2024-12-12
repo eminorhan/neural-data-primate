@@ -14,7 +14,7 @@ _folder_mapping = {
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Consolidate data in multiple files into a single file', add_help=False)
-    parser.add_argument('--data_dir',type=str, help='Data directory')
+    parser.add_argument('--data_dir',type=str, choices=["sub-HumanPitt-held-in-calib", "sub-HumanPitt-held-in-minival", "sub-HumanPitt-held-out-calib"], help='Data directory')
     return parser
 
 if __name__ == '__main__':
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     print(f"Files: {nwb_files}")
 
     # list to store results for each session
-    kin_list, vel_list, timestamps_list, blacklist_list, epochs_list, trials_list, labels_list, spike_counts_list, identifier_list = [], [], [], [], [], [], [], [], []
+    kin_list, vel_list, time_stamps_list, eval_mask_list, epochs_list, trials_list, labels_list, spike_counts_list, identifier_list = [], [], [], [], [], [], [], [], []
 
     for file_name in nwb_files:
         file_path = os.path.join(args.data_dir, file_name)
@@ -37,30 +37,30 @@ if __name__ == '__main__':
             units = nwbfile.units.to_dataframe()
             kin = nwbfile.acquisition['OpenLoopKinematics'].data[:].T
             vel = nwbfile.acquisition['OpenLoopKinematicsVelocity'].data[:].T
-            timestamps = nwbfile.acquisition['OpenLoopKinematics'].offset + np.arange(kin.shape[-1]) * nwbfile.acquisition['OpenLoopKinematics'].rate
-            blacklist = ~nwbfile.acquisition['eval_mask'].data[:].astype(bool)
+            time_stamps = nwbfile.acquisition['OpenLoopKinematics'].offset + np.arange(kin.shape[-1]) * nwbfile.acquisition['OpenLoopKinematics'].rate
+            eval_mask = nwbfile.acquisition['eval_mask'].data[:].astype(bool)
             trials = nwbfile.acquisition['TrialNum'].data[:]
             labels = [l.strip() for l in nwbfile.acquisition['OpenLoopKinematics'].description.split(',')]
-            spike_counts = np.vstack([np.histogram(row, bins=np.append(timestamps, timestamps[-1] + nwbfile.acquisition['OpenLoopKinematics'].rate))[0] for row in units['spike_times']])  # spike count matrix (nxt: n is #channels, t is time bins)
+            spike_counts = np.vstack([np.histogram(row, bins=np.append(time_stamps, time_stamps[-1] + nwbfile.acquisition['OpenLoopKinematics'].rate))[0] for row in units['spike_times']])  # spike count matrix (nxt: n is #channels, t is time bins)
             identifier = nwbfile.identifier
 
             # append trials
             kin_list.append(kin)
             vel_list.append(vel)
-            timestamps_list.append(timestamps)
-            blacklist_list.append(blacklist)
+            time_stamps_list.append(time_stamps)
+            eval_mask_list.append(eval_mask)
             trials_list.append(trials)
             labels_list.append(labels)
             spike_counts_list.append(spike_counts)
             identifier_list.append(identifier)
 
     def gen_data():
-        for a, b, c, d, e, f, g, h in zip(kin_list, vel_list, timestamps_list, blacklist_list, trials_list, labels_list, spike_counts_list, identifier_list):
+        for a, b, c, d, e, f, g, h in zip(kin_list, vel_list, time_stamps_list, eval_mask_list, trials_list, labels_list, spike_counts_list, identifier_list):
             yield {
                 "kin": a,
                 "vel": b,
-                "timestamps": c,
-                "blacklist": d,
+                "time_stamps": c,
+                "eval_mask": d,
                 "trials": e,
                 "labels": f,
                 "spike_counts": g,
@@ -69,5 +69,5 @@ if __name__ == '__main__':
 
     ds = Dataset.from_generator(gen_data)
         
-    # push all data to hub under "all"
+    # push data to hub
     ds.push_to_hub("eminorhan/h1", _folder_mapping[os.path.basename(args.data_dir)], token=True)

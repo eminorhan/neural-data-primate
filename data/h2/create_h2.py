@@ -86,5 +86,5 @@ if __name__ == '__main__':
 
     ds = Dataset.from_generator(gen_data)
         
-    # push all data to hub under "all"
+    # push data to hub
     ds.push_to_hub("eminorhan/h2", _folder_mapping[os.path.basename(args.data_dir)], token=True)
