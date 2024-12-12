@@ -6,7 +6,6 @@
 *.out
 *.npz
 *.png
-*.sh
 *.mat
 *.nwb
 
