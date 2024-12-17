@@ -70,4 +70,10 @@ mc_maze = load_dataset("eminorhan/mc-maze", split='train').select_columns([mc_ma
 n_tokens += count_tokens_in_dataset(mc_maze, mc_maze_column_name)
 print("7")
 
+# mc-rtt
+mc_rtt_column_name = "spike_counts"
+mc_rtt = load_dataset("eminorhan/mc-rtt", split='train').select_columns([mc_rtt_column_name])
+n_tokens += count_tokens_in_dataset(mc_rtt, mc_rtt_column_name)
+print("8")
+
 print(f"total number of tokens {n_tokens}")
