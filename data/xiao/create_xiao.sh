@@ -4,7 +4,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=32GB
-#SBATCH --time=00:10:00
+#SBATCH --time=03:00:00
 #SBATCH --job-name=create_xiao
 #SBATCH --output=create_xiao_%A_%a.out
 

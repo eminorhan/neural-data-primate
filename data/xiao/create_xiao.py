@@ -87,32 +87,35 @@ if __name__ == '__main__':
     # get all .nwb files in the sorted folder
     nwb_files = find_nwb_files(args.data_dir)
     print(f"Files: {nwb_files}")
+    print(f"Total number of files: {len(nwb_files)}")
 
     # lists to store results for each session
     spike_counts_list, identifier_list = [], []
 
-    for file_path in nwb_files:
+    for file_path in sorted(nwb_files):
+        print(f"Processing file: {file_path}")
         with NWBHDF5IO(file_path, "r") as io:
             nwbfile = io.read()
 
-        rasters = nwbfile.processing['ecephys'].data_interfaces['rasters'].data[:]
-        rasters = rebin_counts(rasters).T  # re-bin rasters into 20 ms windows & transpose
+            rasters = nwbfile.processing['ecephys'].data_interfaces['rasters'].data[:]
+            rasters = rebin_counts(rasters).T  # re-bin rasters into 20 ms windows & transpose
+            print(f"Spike count shape-max: {rasters.shape}, {rasters.max()}")
 
-        # file identifier
-        identifier = nwbfile.identifier
+            # file identifier
+            identifier = nwbfile.identifier
 
-        # append sessions
-        spike_counts_list.append(rasters)
-        identifier_list.append(identifier)
+            # append sessions
+            spike_counts_list.append(rasters)
+            identifier_list.append(identifier)
 
-# def gen_data():
-#     for a, b in zip(spike_counts_list, identifier_list):
-#         yield {
-#             "spike_counts": a,
-#             "identifier": b,
-#             }
+    def gen_data():
+        for a, b in zip(spike_counts_list, identifier_list):
+            yield {
+                "spike_counts": a,
+                "identifier": b,
+                }
 
-# ds = Dataset.from_generator(gen_data)
+    ds = Dataset.from_generator(gen_data)
 
-# # push all data to hub
-# ds.push_to_hub("eminorhan/xiao", token=True)
+    # push all data to hub
+    ds.push_to_hub("eminorhan/xiao", token=True)
