@@ -115,7 +115,7 @@ if __name__ == '__main__':
                 "identifier": b,
                 }
 
-    ds = Dataset.from_generator(gen_data)
+    ds = Dataset.from_generator(gen_data, writer_batch_size=1)
 
     # push all data to hub
     ds.push_to_hub("eminorhan/xiao", token=True)
