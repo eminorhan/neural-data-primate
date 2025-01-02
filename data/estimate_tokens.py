@@ -1,9 +1,10 @@
 import numpy as np
+from tqdm import tqdm
 from datasets import load_dataset, concatenate_datasets
 
 def count_tokens_in_dataset(dataset, column_name):
     n_tok = 0
-    for sample in dataset:
+    for sample in tqdm(dataset, total=len(dataset)):
         sh = np.array(sample[column_name]).shape
         n_tok += np.prod(sh)
     return n_tok
@@ -97,5 +98,19 @@ dmfc_rsg = load_dataset("eminorhan/dmfc-rsg", split='train').select_columns([dmf
 nt = count_tokens_in_dataset(dmfc_rsg, dmfc_rsg_column_name)
 n_tokens += nt
 print(f"10. DMFC-rsg: {nt:,} tokens")
+
+# xiao
+xiao_column_name = "spike_counts"
+xiao = load_dataset("eminorhan/xiao", split='train').select_columns([xiao_column_name])
+nt = count_tokens_in_dataset(xiao, xiao_column_name)
+n_tokens += nt
+print(f"11. Xiao: {nt:,} tokens")
+
+# churchland
+churchland_column_name = "spike_counts"
+churchland = load_dataset("eminorhan/churchland", split='train').select_columns([churchland_column_name])
+nt = count_tokens_in_dataset(churchland, churchland_column_name)
+n_tokens += nt
+print(f"12. Churchland: {nt:,} tokens")
 
 print(f"Total number of tokens: {n_tokens:,}")
