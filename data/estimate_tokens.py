@@ -113,4 +113,11 @@ nt = count_tokens_in_dataset(churchland, churchland_column_name)
 n_tokens += nt
 print(f"12. Churchland: {nt:,} tokens")
 
+# perich
+perich_column_name = "spike_counts"
+perich = load_dataset("eminorhan/perich", split='train').select_columns([perich_column_name])
+nt = count_tokens_in_dataset(perich, perich_column_name)
+n_tokens += nt
+print(f"13. Perich: {nt:,} tokens")
+
 print(f"Total number of tokens: {n_tokens:,}")
