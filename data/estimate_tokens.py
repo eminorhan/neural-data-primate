@@ -120,4 +120,11 @@ nt = count_tokens_in_dataset(perich, perich_column_name)
 n_tokens += nt
 print(f"13. Perich: {nt:,} tokens")
 
+# makin
+makin_column_name = "spike_counts"
+makin = load_dataset("eminorhan/makin", split='train').select_columns([makin_column_name])
+nt = count_tokens_in_dataset(makin, makin_column_name)
+n_tokens += nt
+print(f"14. Makin: {nt:,} tokens")
+
 print(f"Total number of tokens: {n_tokens:,}")
