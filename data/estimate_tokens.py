@@ -71,60 +71,53 @@ nt = count_tokens_in_dataset(m2, m2_column_name)
 n_tokens += nt
 print(f"6. M2: {nt:,} tokens")
 
-# mc-maze
-mc_maze_column_name = "spike_counts"
-mc_maze = load_dataset("eminorhan/mc-maze", split='train').select_columns([mc_maze_column_name])
-nt = count_tokens_in_dataset(mc_maze, mc_maze_column_name)
-n_tokens += nt
-print(f"7. MC-maze: {nt:,} tokens")
-
-# mc-rtt
-mc_rtt_column_name = "spike_counts"
-mc_rtt = load_dataset("eminorhan/mc-rtt", split='train').select_columns([mc_rtt_column_name])
-nt = count_tokens_in_dataset(mc_rtt, mc_rtt_column_name)
-n_tokens += nt
-print(f"8. MC-rtt: {nt:,} tokens")
-
 # area2-bump
 area2_bump_column_name = "spike_counts"
 area2_bump = load_dataset("eminorhan/area2-bump", split='train').select_columns([area2_bump_column_name])
 nt = count_tokens_in_dataset(area2_bump, area2_bump_column_name)
 n_tokens += nt
-print(f"9. Area2-bump: {nt:,} tokens")
+print(f"7. Area2-bump: {nt:,} tokens")
 
 # dmfc-rsg
 dmfc_rsg_column_name = "spike_counts"
 dmfc_rsg = load_dataset("eminorhan/dmfc-rsg", split='train').select_columns([dmfc_rsg_column_name])
 nt = count_tokens_in_dataset(dmfc_rsg, dmfc_rsg_column_name)
 n_tokens += nt
-print(f"10. DMFC-rsg: {nt:,} tokens")
+print(f"8. DMFC-rsg: {nt:,} tokens")
 
 # xiao
 xiao_column_name = "spike_counts"
 xiao = load_dataset("eminorhan/xiao", split='train').select_columns([xiao_column_name])
 nt = count_tokens_in_dataset(xiao, xiao_column_name)
 n_tokens += nt
-print(f"11. Xiao: {nt:,} tokens")
+print(f"9. Xiao: {nt:,} tokens")
 
 # churchland
 churchland_column_name = "spike_counts"
 churchland = load_dataset("eminorhan/churchland", split='train').select_columns([churchland_column_name])
 nt = count_tokens_in_dataset(churchland, churchland_column_name)
 n_tokens += nt
-print(f"12. Churchland: {nt:,} tokens")
+print(f"10. Churchland: {nt:,} tokens")
 
 # perich
 perich_column_name = "spike_counts"
 perich = load_dataset("eminorhan/perich", split='train').select_columns([perich_column_name])
 nt = count_tokens_in_dataset(perich, perich_column_name)
 n_tokens += nt
-print(f"13. Perich: {nt:,} tokens")
+print(f"11. Perich: {nt:,} tokens")
 
 # makin
 makin_column_name = "spike_counts"
 makin = load_dataset("eminorhan/makin", split='train').select_columns([makin_column_name])
 nt = count_tokens_in_dataset(makin, makin_column_name)
 n_tokens += nt
-print(f"14. Makin: {nt:,} tokens")
+print(f"12. Makin: {nt:,} tokens")
+
+# lanzarini
+lanzarini_column_name = "spike_counts"
+lanzarini = load_dataset("eminorhan/lanzarini", split='train').select_columns([lanzarini_column_name])
+nt = count_tokens_in_dataset(lanzarini, lanzarini_column_name)
+n_tokens += nt
+print(f"13. Lanzarini: {nt:,} tokens")
 
 print(f"Total number of tokens: {n_tokens:,}")
