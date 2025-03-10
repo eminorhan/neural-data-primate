@@ -120,4 +120,18 @@ nt = count_tokens_in_dataset(lanzarini, lanzarini_column_name)
 n_tokens += nt
 print(f"13. Lanzarini: {nt:,} tokens")
 
+# neupane-ppc
+neupane_ppc_column_name = "spike_counts"
+neupane_ppc = load_dataset("eminorhan/neupane-ppc", split='train').select_columns([neupane_ppc_column_name])
+nt = count_tokens_in_dataset(neupane_ppc, neupane_ppc_column_name)
+n_tokens += nt
+print(f"14. Neupane (PPC): {nt:,} tokens")
+
+# neupane-entorhinal
+neupane_entorhinal_column_name = "spike_counts"
+neupane_entorhinal = load_dataset("eminorhan/neupane-entorhinal", split='train').select_columns([neupane_entorhinal_column_name])
+nt = count_tokens_in_dataset(neupane_entorhinal, neupane_entorhinal_column_name)
+n_tokens += nt
+print(f"15. Neupane (Entorhinal): {nt:,} tokens")
+
 print(f"Total number of tokens: {n_tokens:,}")

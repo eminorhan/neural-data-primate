@@ -111,6 +111,18 @@ lanzarini = lanzarini.add_column("source_dataset", ["lanzarini"] * len(lanzarini
 lanzarini = lanzarini.cast_column("spike_counts", Sequence(feature=Sequence(feature=Value(dtype='uint8', id=None), length=-1, id=None), length=-1, id=None))
 print(lanzarini.features["spike_counts"])
 
+# neupane-ppc
+neupane_ppc_column_name = "spike_counts"
+neupane_ppc = load_dataset("eminorhan/neupane-ppc", split='train').select_columns([neupane_ppc_column_name])
+neupane_ppc = neupane_ppc.add_column("source_dataset", ["neupane_ppc"] * len(neupane_ppc))
+print(neupane_ppc.features["spike_counts"])
+
+# neupane-entorhinal
+neupane_entorhinal_column_name = "spike_counts"
+neupane_entorhinal = load_dataset("eminorhan/neupane-entorhinal", split='train').select_columns([neupane_entorhinal_column_name])
+neupane_entorhinal = neupane_entorhinal.add_column("source_dataset", ["neupane_entorhinal"] * len(neupane_entorhinal))
+print(neupane_entorhinal.features["spike_counts"])
+
 # concatenate all and push to hub
-neural_bench = concatenate_datasets([willett, h1, h2, m1a, m1b, m2, area2_bump, dmfc_rsg, xiao, churchland, perich, makin, lanzarini])
+neural_bench = concatenate_datasets([willett, h1, h2, m1a, m1b, m2, area2_bump, dmfc_rsg, xiao, churchland, perich, makin, lanzarini, neupane_ppc, neupane_entorhinal])
 neural_bench.push_to_hub("eminorhan/neural-bench", token=True)
