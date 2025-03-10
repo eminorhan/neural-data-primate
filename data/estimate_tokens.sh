@@ -2,9 +2,9 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=32GB
-#SBATCH --time=9:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=240GB
+#SBATCH --time=2:00:00
 #SBATCH --job-name=estimate_tokens
 #SBATCH --output=estimate_tokens_%A_%a.out
 
