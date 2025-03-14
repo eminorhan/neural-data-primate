@@ -123,6 +123,18 @@ neupane_entorhinal = load_dataset("eminorhan/neupane-entorhinal", split='train')
 neupane_entorhinal = neupane_entorhinal.add_column("source_dataset", ["neupane_entorhinal"] * len(neupane_entorhinal))
 print(neupane_entorhinal.features["spike_counts"])
 
+# papale
+papale_column_name = "spike_counts"
+papale = load_dataset("eminorhan/papale", split='train').select_columns([papale_column_name])
+papale = papale.add_column("source_dataset", ["papale"] * len(papale))
+print(papale.features["spike_counts"])
+
+# rajalingham
+rajalingham_column_name = "spike_counts"
+rajalingham = load_dataset("eminorhan/rajalingham", split='train').select_columns([rajalingham_column_name])
+rajalingham = rajalingham.add_column("source_dataset", ["rajalingham"] * len(rajalingham))
+print(rajalingham.features["spike_counts"])
+
 # concatenate all and push to hub
-neural_bench = concatenate_datasets([willett, h1, h2, m1a, m1b, m2, area2_bump, dmfc_rsg, xiao, churchland, perich, makin, lanzarini, neupane_ppc, neupane_entorhinal])
+neural_bench = concatenate_datasets([willett, h1, h2, m1a, m1b, m2, area2_bump, dmfc_rsg, xiao, churchland, perich, makin, lanzarini, neupane_ppc, neupane_entorhinal, papale, rajalingham])
 neural_bench.push_to_hub("eminorhan/neural-bench", token=True)

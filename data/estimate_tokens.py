@@ -120,18 +120,32 @@ n_tokens = 0
 # n_tokens += nt
 # print(f"13. Lanzarini: {nt:,} tokens")
 
-# neupane-ppc
-neupane_ppc_column_name = "spike_counts"
-neupane_ppc = load_dataset("eminorhan/neupane-ppc", split='train').select_columns([neupane_ppc_column_name])
-nt = count_tokens_in_dataset(neupane_ppc, neupane_ppc_column_name)
-n_tokens += nt
-print(f"14. Neupane (PPC): {nt:,} tokens")
+# # neupane-ppc
+# neupane_ppc_column_name = "spike_counts"
+# neupane_ppc = load_dataset("eminorhan/neupane-ppc", split='train').select_columns([neupane_ppc_column_name])
+# nt = count_tokens_in_dataset(neupane_ppc, neupane_ppc_column_name)
+# n_tokens += nt
+# print(f"14. Neupane (PPC): {nt:,} tokens")
 
-# neupane-entorhinal
-neupane_entorhinal_column_name = "spike_counts"
-neupane_entorhinal = load_dataset("eminorhan/neupane-entorhinal", split='train').select_columns([neupane_entorhinal_column_name])
-nt = count_tokens_in_dataset(neupane_entorhinal, neupane_entorhinal_column_name)
+# # neupane-entorhinal
+# neupane_entorhinal_column_name = "spike_counts"
+# neupane_entorhinal = load_dataset("eminorhan/neupane-entorhinal", split='train').select_columns([neupane_entorhinal_column_name])
+# nt = count_tokens_in_dataset(neupane_entorhinal, neupane_entorhinal_column_name)
+# n_tokens += nt
+# print(f"15. Neupane (Entorhinal): {nt:,} tokens")
+
+# papale
+papale_column_name = "spike_counts"
+papale = load_dataset("eminorhan/papale", split='train').select_columns([papale_column_name])
+nt = count_tokens_in_dataset(papale, papale_column_name)
 n_tokens += nt
-print(f"15. Neupane (Entorhinal): {nt:,} tokens")
+print(f"16. Papale: {nt:,} tokens")
+
+# rajalingham
+rajalingham_column_name = "spike_counts"
+rajalingham = load_dataset("eminorhan/rajalingham", split='train').select_columns([rajalingham_column_name])
+nt = count_tokens_in_dataset(rajalingham, rajalingham_column_name)
+n_tokens += nt
+print(f"17. Rajalingham: {nt:,} tokens")
 
 print(f"Total number of tokens: {n_tokens:,}")

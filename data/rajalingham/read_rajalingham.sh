@@ -2,8 +2,8 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=240GB
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=32GB
 #SBATCH --time=1:00:00
 #SBATCH --job-name=read_rajalingham
 #SBATCH --output=read_rajalingham_%A_%a.out

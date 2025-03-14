@@ -17,7 +17,7 @@ def read_mat_file(filepath):
     """
     try:
         data = loadmat(filepath)
-        data['neural_responses_reliable'][0,0][0]
+        return np.nan_to_num(data['neural_responses_reliable'][0,0][0])
     except Exception as e:
         print(f"Error reading .mat file: {e}")
         return None
@@ -34,7 +34,7 @@ def convert_mua_to_spikes(mua_matrix):
         numpy.ndarray: Concatenated binned spike count matrix of shape (electrodes, binned_time_bins * trials), dtype=uint8.
     """
 
-    electrodes, trials, time_bins   = mua_matrix.shape
+    electrodes, trials, time_bins = mua_matrix.shape
     spike_matrix = np.zeros_like(mua_matrix, dtype=int)
 
     # calculate min/max response per electrode
