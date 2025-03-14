@@ -22,4 +22,4 @@ Token counts per dataset:
 16. **M2:** 12,708,384 tokens ([dandi:000953](https://dandiarchive.org/dandiset/000953))
 17. **Area2-bump:** 7,394,070 tokens ([dandi:000127](https://dandiarchive.org/dandiset/000127))
 
-Total number of tokens: 31,997,921,662
+Total number of tokens: 31,997,921,662. The combined dataset can be accessed from [this](https://huggingface.co/datasets/eminorhan/neural-bench) public HF repository.
