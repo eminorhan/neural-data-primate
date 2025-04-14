@@ -95,7 +95,7 @@ if __name__ == '__main__':
                 n_channels, n_time_bins = spike_counts.shape
                 num_segments = math.ceil(total_elements / 10_000_000)
                 segment_size = math.ceil(n_time_bins / num_segments)
-                print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
+                print(f"Spike count shape / max: {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
                 for i in range(num_segments):
                     start_index = i * segment_size
                     end_index = min((i + 1) * segment_size, n_time_bins)
@@ -111,7 +111,7 @@ if __name__ == '__main__':
                 subject_list.append(subject_id)
                 session_list.append(session_id)
                 segment_list.append("segment_0")  # default segment id
-                print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()} (segment_0)")
+                print(f"Spike count shape / max: {spike_counts.shape} / {spike_counts.max()} (segment_0)")
                 n_tokens += np.prod(spike_counts.shape)
 
     def gen_data():
@@ -128,4 +128,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/dmfc-rsg", max_shard_size="1GB", token=True)
+    ds.push_to_hub("eminorhan/h1", max_shard_size="1GB", token=True)

@@ -9,8 +9,7 @@ from datasets import Dataset
 def find_nwb_files(root_dir):
     """
     Crawls through a directory (including subdirectories), finds all files
-    that end with ".nwb", but not with "_image.nwb" or "_behavior.nwb", and
-    returns the full paths of all the found files in a list.
+    that end with ".nwb", and returns the full paths of all the found files in a list.
 
     Args:
         root_dir: The root directory to start the search from.
@@ -79,10 +78,8 @@ if __name__ == '__main__':
         with NWBHDF5IO(file_path, "r") as io:
             nwbfile = io.read()
 
-            # we will save just spike activity for now
-            units = nwbfile.units.to_dataframe()
-            max_time = max([u.max() if len(u)>0 else 0 for u in units['spike_times']])
-            spike_counts = np.vstack([np.histogram(row, bins=np.arange(0, max_time + 0.02, 0.02))[0] for row in units['spike_times']]).astype(np.uint8)  # spike count matrix (nxt: n is #channels, t is time bins)
+            # read binned spike counts
+            spike_counts = nwbfile.acquisition['binned_spikes'].data[:].T.astype(np.uint8)
 
             # subject, session identifiers
             subject_id, session_id = extract_subject_session_id(file_path)
@@ -128,4 +125,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/dmfc-rsg", max_shard_size="1GB", token=True)
+    ds.push_to_hub("eminorhan/h2", max_shard_size="1GB", token=True)

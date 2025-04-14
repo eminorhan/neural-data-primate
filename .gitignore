@@ -4,10 +4,13 @@
 *.tar
 *.ckpt
 *.out
-*.npz
 *.png
 *.mat
 *.nwb
+*.npy
+*.npz
+*.csv
+*.zip
 
 # Directories
 **/__pycache__

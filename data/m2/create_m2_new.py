@@ -128,4 +128,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/dmfc-rsg", max_shard_size="1GB", token=True)
+    ds.push_to_hub("eminorhan/m2", max_shard_size="1GB", token=True)

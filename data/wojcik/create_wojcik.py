@@ -27,11 +27,10 @@ def find_mat_files(root_dir):
     mat_files = []
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
-            if filename.endswith(".mat"):
+            if filename.endswith(".npy"):
                 full_path = os.path.join(dirpath, filename)
                 mat_files.append(full_path)
     return mat_files
-
 
 
 def extract_subject_session_id(file_path):
@@ -76,55 +75,41 @@ if __name__ == '__main__':
 
     for file_path in sorted(mat_files):
         print(f"Processing file: {file_path}")
-        with h5py.File(file_path, "r") as f:
-            data = f['spikes']
-            u, n = data.shape
-            all_channels = []
-            for i_n in range(n):
-                spike_times = []
-                for i_u in range(u):
-                    group = f['spikes'][i_u, i_n]
-                    obj = f[group][()]
-                    if obj.ndim == 2:
-                        spike_times.append(obj.flatten())
-                if spike_times != []:
-                    spike_times = np.concatenate(spike_times)
-                all_channels.append(spike_times)
 
-            max_time = max([-np.inf if isinstance(u, list) else u.max() for u in all_channels])
-            min_time = min([np.inf if isinstance(u, list) else u.min() for u in all_channels])
+        spike_counts = np.load(file_path)
+        n_trials, n_units, n_timebins = spike_counts.shape
+        spike_counts = spike_counts.transpose(1, 0, 2).reshape(n_units, n_trials * n_timebins)
+        spike_counts = np.ceil(0.02 * spike_counts).astype(np.uint8)
 
-            spike_counts = np.vstack([np.histogram(row, bins=np.arange(min_time, max_time + 0.02, 0.02))[0] for row in all_channels]).astype(np.uint8)  # spike count matrix (nxt: n is #channels, t is time bins)
+        # subject, session identifiers
+        subject_id, session_id = extract_subject_session_id(file_path)
 
-            # subject, session identifiers
-            subject_id, session_id = extract_subject_session_id(file_path)
+        # token count of current session
+        total_elements = np.prod(spike_counts.shape)
 
-            # token count of current session
-            total_elements = np.prod(spike_counts.shape)
-
-            # append sessions; if session data is large, divide spike_counts array into smaller chunks
-            if total_elements > 10_000_000:
-                n_channels, n_time_bins = spike_counts.shape
-                num_segments = math.ceil(total_elements / 10_000_000)
-                segment_size = math.ceil(n_time_bins / num_segments)
-                print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
-                for i in range(num_segments):
-                    start_index = i * segment_size
-                    end_index = min((i + 1) * segment_size, n_time_bins)
-                    sub_array = spike_counts[:, start_index:end_index]
-                    spike_counts_list.append(sub_array)
-                    subject_list.append(subject_id)
-                    session_list.append(session_id)
-                    segment_list.append(f"segment_{i}")
-                    print(f"Divided into segment_{i} with shape / max: {sub_array.shape} / {sub_array.max()}")
-                    n_tokens += np.prod(sub_array.shape)
-            else:
-                spike_counts_list.append(spike_counts)
+        # append sessions; if session data is large, divide spike_counts array into smaller chunks
+        if total_elements > 10_000_000:
+            n_channels, n_time_bins = spike_counts.shape
+            num_segments = math.ceil(total_elements / 10_000_000)
+            segment_size = math.ceil(n_time_bins / num_segments)
+            print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
+            for i in range(num_segments):
+                start_index = i * segment_size
+                end_index = min((i + 1) * segment_size, n_time_bins)
+                sub_array = spike_counts[:, start_index:end_index]
+                spike_counts_list.append(sub_array)
                 subject_list.append(subject_id)
                 session_list.append(session_id)
-                segment_list.append("segment_0")  # default segment id
-                print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()} (segment_0)")
-                n_tokens += np.prod(spike_counts.shape)
+                segment_list.append(f"segment_{i}")
+                print(f"Divided into segment_{i} with shape / max: {sub_array.shape} / {sub_array.max()}")
+                n_tokens += np.prod(sub_array.shape)
+        else:
+            spike_counts_list.append(spike_counts)
+            subject_list.append(subject_id)
+            session_list.append(session_id)
+            segment_list.append("segment_0")  # default segment id
+            print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()} (segment_0)")
+            n_tokens += np.prod(spike_counts.shape)
 
     def gen_data():
         for a, b, c, d in zip(spike_counts_list, subject_list, session_list, segment_list):
@@ -140,4 +125,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/makin", max_shard_size="1GB", token=True)
+    ds.push_to_hub("eminorhan/wojcik", max_shard_size="1GB", token=True)

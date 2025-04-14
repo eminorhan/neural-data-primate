@@ -53,13 +53,13 @@ def convert_mua_to_spikes(mua_matrix):
     # concatenate trials
     concatenated_spikes = spike_matrix.reshape((electrodes, time_bins * trials))
 
-    return concatenated_spikes.T.astype(np.uint8)
+    return concatenated_spikes.astype(np.uint8)
 
 
 if __name__ == '__main__':
 
-    data_mahler = read_mat_file('mahler_hand_dmfc_dataset_50ms.mat')
-    data_perle = read_mat_file('perle_hand_dmfc_dataset_50ms.mat')
+    data_mahler = read_mat_file('data/mahler/mahler_hand_dmfc_dataset_50ms.mat')
+    data_perle = read_mat_file('data/perle/perle_hand_dmfc_dataset_50ms.mat')
     print(f"Loaded data files.")
 
     spike_count_mat_mahler = convert_mua_to_spikes(data_mahler)
@@ -68,18 +68,26 @@ if __name__ == '__main__':
     print(f"mahler spike count matrix shape/dtype: {spike_count_mat_mahler.shape}/{spike_count_mat_mahler.dtype}; max/min/median: {spike_count_mat_mahler.max()}/{spike_count_mat_mahler.min()}/{np.median(spike_count_mat_mahler)}")
     print(f"perle spike count matrix shape/dtype: {spike_count_mat_perle.shape}/{spike_count_mat_perle.dtype}; max/min/median: {spike_count_mat_perle.max()}/{spike_count_mat_perle.min()}/{np.median(spike_count_mat_perle)}")
 
-    # lists to store results for each session
+    n_tokens = np.prod(spike_count_mat_mahler.shape) + np.prod(spike_count_mat_perle.shape)
+
+    # # lists to store results for each session
     spike_counts_list = [spike_count_mat_mahler, spike_count_mat_perle]
-    identifier_list = ["Mahler", "Perle"]
+    subject_list = ["Mahler", "Perle"]
+    session_list = ["M_0", "P_0"]
+    segment_list = ["segment_0", "segment_0"]
 
     def gen_data():
-        for a, b in zip(spike_counts_list, identifier_list):
+        for a, b, c, d in zip(spike_counts_list, subject_list, session_list, segment_list):
             yield {
                 "spike_counts": a,
-                "identifier": b,
+                "subject_id": b,
+                "session_id": c,
+                "segment_id": d
                 }
-
+            
     ds = Dataset.from_generator(gen_data, writer_batch_size=1)
+    print(f"Number of tokens in dataset: {n_tokens} tokens")
+    print(f"Number of rows in dataset: {len(ds)}")
 
-    # push all data to hub
-    ds.push_to_hub("eminorhan/rajalingham", num_shards=2, token=True)
+    # push all data to hub 
+    ds.push_to_hub("eminorhan/rajalingham", max_shard_size="1GB", token=True)
