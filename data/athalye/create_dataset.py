@@ -27,7 +27,7 @@ def find_nwb_files(root_dir):
     nwb_files = []
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
-            if filename.endswith("_behavior+ecephys.nwb"):
+            if filename.endswith(".nwb"):
                 full_path = os.path.join(dirpath, filename)
                 nwb_files.append(full_path)
     return nwb_files
@@ -53,6 +53,8 @@ def extract_subject_session_id(file_path):
 def get_args_parser():
     parser = argparse.ArgumentParser('Consolidate data in multiple files into a single file', add_help=False)
     parser.add_argument('--data_dir',default="data",type=str, help='Data directory')
+    parser.add_argument('--hf_repo_name',default="eminorhan/athalye",type=str, help='processed dataset will be pushed to this HF dataset repo')
+    parser.add_argument('--token_count_limit',default=10_000_000, type=int, help='sessions with larger token counts than this will be split into chunks (default: 10_000_000)')
     return parser
 
 
@@ -78,24 +80,31 @@ if __name__ == '__main__':
         with NWBHDF5IO(file_path, "r") as io:
             nwbfile = io.read()
 
-            # we will save just spike activity for now
-            units = nwbfile.processing['ecephys']['units'].to_dataframe()
-            max_time = max([u.max() for u in units['spike_times']])
-            spike_counts = np.vstack([np.histogram(row, bins=np.arange(0, max_time + 0.02, 0.02))[0] for row in units['spike_times']]).astype(np.uint8)  # spike count matrix (nxt: n is #channels, t is time bins)
+            # we will save just spike activity
+            spike_counts = nwbfile.processing["behavior"]["spike_counts"].data[:].T.astype(np.uint8)
 
             # subject, session identifiers
             subject_id, session_id = extract_subject_session_id(file_path)
+
+            # monkey J spike counts are calculated at 200 Hz, here we resample them to 50 Hz. 
+            if subject_id == 'sub-monk-j':
+                resample_factor = 4
+                n_channels, t_old = spike_counts.shape
+                t_new = t_old // resample_factor
+                t_truncated = t_new * resample_factor         
+                spike_counts = spike_counts[:, :t_truncated]       
+                spike_counts = spike_counts.reshape(n_channels, t_new, resample_factor).sum(axis=2)
 
             # token count of current session
             total_elements = np.prod(spike_counts.shape)
 
             # append sessions
             # if session data is large, divide spike_counts array into smaller chunks
-            if total_elements > 10_000_000:
+            if total_elements > args.token_count_limit:
                 n_channels, n_time_bins = spike_counts.shape
-                num_segments = math.ceil(total_elements / 10_000_000)
+                num_segments = math.ceil(total_elements / args.token_count_limit)
                 segment_size = math.ceil(n_time_bins / num_segments)
-                print(f"Spike count shape / max: {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
+                print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
                 for i in range(num_segments):
                     start_index = i * segment_size
                     end_index = min((i + 1) * segment_size, n_time_bins)
@@ -111,7 +120,7 @@ if __name__ == '__main__':
                 subject_list.append(subject_id)
                 session_list.append(session_id)
                 segment_list.append("segment_0")  # default segment id
-                print(f"Spike count shape / max: {spike_counts.shape} / {spike_counts.max()} (segment_0)")
+                print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()} (segment_0)")
                 n_tokens += np.prod(spike_counts.shape)
 
     def gen_data():
@@ -128,4 +137,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/neupane-ppc", max_shard_size="1GB", token=True)
+    ds.push_to_hub(args.hf_repo_name, max_shard_size="1GB", token=True)

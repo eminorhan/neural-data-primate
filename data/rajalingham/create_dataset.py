@@ -1,4 +1,5 @@
 
+import argparse
 import numpy as np
 from scipy.io import loadmat
 from datasets import Dataset
@@ -23,47 +24,43 @@ def read_mat_file(filepath):
         return None
 
 
-def convert_mua_to_spikes(mua_matrix):
+def convert_to_spike_counts(mua_matrix):
     """
-    Convert MUA into spike counts (caution: not rigorous, ideally I should use raw voltage traces)
+    Convert mean neural response into spike counts
 
     Args:
-        mua_matrix (numpy.ndarray): MUA matrix of shape (electrodes, trials, time_bins).
+        mua_matrix (numpy.ndarray): neural activity matrix of shape (electrodes, trials, time_bins).
 
     Returns:
         numpy.ndarray: Concatenated binned spike count matrix of shape (electrodes, binned_time_bins * trials), dtype=uint8.
     """
 
     electrodes, trials, time_bins = mua_matrix.shape
-    spike_matrix = np.zeros_like(mua_matrix, dtype=int)
-
-    # calculate min/max response per electrode
-    electrode_mins = np.zeros(electrodes)
-    electrode_maxs = np.zeros(electrodes)
-    for electrode_idx in range(electrodes):
-        electrode_data = mua_matrix[electrode_idx, :, :].flatten()  # flatten across trials and time bins
-        electrode_mins[electrode_idx] = np.min(electrode_data)
-        electrode_maxs[electrode_idx] = np.max(electrode_data)
-
-    # normalize responses using per-electrode min/max calculated above
-    for electrode_idx in range(electrodes):
-        trial_data = mua_matrix[electrode_idx, :, :]
-        spike_matrix[electrode_idx, :, :] = np.round(10.0 * (trial_data - electrode_mins[electrode_idx]) / (electrode_maxs[electrode_idx] - electrode_mins[electrode_idx]))
 
     # concatenate trials
-    concatenated_spikes = spike_matrix.reshape((electrodes, time_bins * trials))
+    concatenated_spikes = np.round(50 * mua_matrix.reshape((electrodes, time_bins * trials)))
 
     return concatenated_spikes.astype(np.uint8)
 
 
+def get_args_parser():
+    parser = argparse.ArgumentParser('Consolidate data in multiple files into a single file', add_help=False)
+    parser.add_argument('--hf_repo_name',default="eminorhan/rajalingham",type=str, help='processed dataset will be pushed to this HF dataset repo')
+    return parser
+
+
 if __name__ == '__main__':
+
+    args = get_args_parser()
+    args = args.parse_args()
+    print(args)
 
     data_mahler = read_mat_file('data/mahler/mahler_hand_dmfc_dataset_50ms.mat')
     data_perle = read_mat_file('data/perle/perle_hand_dmfc_dataset_50ms.mat')
     print(f"Loaded data files.")
 
-    spike_count_mat_mahler = convert_mua_to_spikes(data_mahler)
-    spike_count_mat_perle = convert_mua_to_spikes(data_perle)
+    spike_count_mat_mahler = convert_to_spike_counts(data_mahler)
+    spike_count_mat_perle = convert_to_spike_counts(data_perle)
 
     print(f"mahler spike count matrix shape/dtype: {spike_count_mat_mahler.shape}/{spike_count_mat_mahler.dtype}; max/min/median: {spike_count_mat_mahler.max()}/{spike_count_mat_mahler.min()}/{np.median(spike_count_mat_mahler)}")
     print(f"perle spike count matrix shape/dtype: {spike_count_mat_perle.shape}/{spike_count_mat_perle.dtype}; max/min/median: {spike_count_mat_perle.max()}/{spike_count_mat_perle.min()}/{np.median(spike_count_mat_perle)}")
@@ -90,4 +87,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/rajalingham", max_shard_size="1GB", token=True)
+    ds.push_to_hub(args.hf_repo_name, max_shard_size="1GB", token=True)

@@ -9,8 +9,7 @@ from datasets import Dataset
 def find_nwb_files(root_dir):
     """
     Crawls through a directory (including subdirectories), finds all files
-    that end with ".nwb", but not with "_image.nwb" or "_behavior.nwb", and
-    returns the full paths of all the found files in a list.
+    that end with ".nwb", and returns the full paths of all the found files in a list.
 
     Args:
         root_dir: The root directory to start the search from.
@@ -28,7 +27,7 @@ def find_nwb_files(root_dir):
     nwb_files = []
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
-            if filename.endswith(".nwb") and not (filename.endswith("_image.nwb") or filename.endswith("_behavior.nwb")):
+            if filename.endswith("_behavior+ecephys.nwb"):
                 full_path = os.path.join(dirpath, filename)
                 nwb_files.append(full_path)
     return nwb_files
@@ -51,48 +50,12 @@ def extract_subject_session_id(file_path):
     return f"{subdirectory}", f"{filename_without_extension}"
 
 
-def rebin_counts(X, bin_size_ms=20):
-    """
-    Re-bins count data into larger time bins.
-
-    Args:
-        X: A NumPy array of shape (t, n) where t is the number of 1ms time bins
-           and n is the number of events in each bin.
-        bin_size_ms: The desired size of the new time bins in milliseconds.
-
-    Returns:
-        A NumPy array of shape (t_new, n) where t_new is the number of new time bins.
-        Returns None if input array is invalid or bin size is not positive.
-    """
-
-    if not isinstance(X, np.ndarray) or X.ndim != 2 or X.shape[0] == 0 or X.shape[1] == 0:
-      print("Invalid input array. Must be a 2D numpy array with non-zero dimensions.")
-      return None
-
-    if bin_size_ms <= 0 or not isinstance(bin_size_ms, int):
-        print("Bin size must be a positive integer.")
-        return None
-
-    t, n = X.shape
-    t_new = t // bin_size_ms  # Integer division to get the number of new bins
-
-    if t_new == 0:
-        print("The new bin size is larger than the total time duration, resulting in 0 bins.")
-        return np.zeros((0, n), dtype=X.dtype)
-
-    X_binned = np.zeros((t_new, n), dtype=X.dtype)  # Initialize the binned array
-
-    for i in range(t_new):
-        start_index = i * bin_size_ms
-        end_index = (i + 1) * bin_size_ms
-        X_binned[i, :] = np.sum(X[start_index:end_index, :], axis=0)
-
-    return X_binned
-
-
 def get_args_parser():
     parser = argparse.ArgumentParser('Consolidate data in multiple files into a single file', add_help=False)
     parser.add_argument('--data_dir',default="data",type=str, help='Data directory')
+    parser.add_argument('--hf_repo_name',default="eminorhan/neupane-ppc",type=str, help='processed dataset will be pushed to this HF dataset repo')
+    parser.add_argument('--token_count_limit',default=10_000_000, type=int, help='sessions with larger token counts than this will be split into chunks (default: 10_000_000)')
+    parser.add_argument('--bin_size',default=0.02, type=float, help='size of time bins (in seconds) for calculating spike counts (default: 0.02)')
     return parser
 
 
@@ -118,8 +81,10 @@ if __name__ == '__main__':
         with NWBHDF5IO(file_path, "r") as io:
             nwbfile = io.read()
 
-            rasters = nwbfile.processing['ecephys'].data_interfaces['rasters'].data[:]
-            spike_counts = rebin_counts(rasters).T.astype(np.uint8)  # re-bin rasters into 20 ms windows & transpose
+            # we will save just spike activity
+            units = nwbfile.processing['ecephys']['units'].to_dataframe()
+            max_time = max([u.max() for u in units['spike_times']])
+            spike_counts = np.vstack([np.histogram(row, bins=np.arange(0, max_time + args.bin_size, args.bin_size))[0] for row in units['spike_times']]).astype(np.uint8)  # spike count matrix (nxt: n is #channels, t is time bins)
 
             # subject, session identifiers
             subject_id, session_id = extract_subject_session_id(file_path)
@@ -129,9 +94,9 @@ if __name__ == '__main__':
 
             # append sessions
             # if session data is large, divide spike_counts array into smaller chunks
-            if total_elements > 10_000_000:
+            if total_elements > args.token_count_limit:
                 n_channels, n_time_bins = spike_counts.shape
-                num_segments = math.ceil(total_elements / 10_000_000)
+                num_segments = math.ceil(total_elements / args.token_count_limit)
                 segment_size = math.ceil(n_time_bins / num_segments)
                 print(f"Spike count shape / max: {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
                 for i in range(num_segments):
@@ -166,4 +131,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/xiao", max_shard_size="1GB", token=True)
+    ds.push_to_hub(args.hf_repo_name, max_shard_size="1GB", token=True)

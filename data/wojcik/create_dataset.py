@@ -53,6 +53,10 @@ def extract_subject_session_id(file_path):
 def get_args_parser():
     parser = argparse.ArgumentParser('Consolidate data in multiple files into a single file', add_help=False)
     parser.add_argument('--data_dir',default="data",type=str, help='Data directory')
+    parser.add_argument('--hf_repo_name',default="eminorhan/wojcik",type=str, help='processed dataset will be pushed to this HF dataset repo')
+    parser.add_argument('--token_count_limit',default=10_000_000, type=int, help='sessions with larger token counts than this will be split into chunks (default: 10_000_000)')
+    parser.add_argument('--bin_size',default=20, type=int, help='bin size in units of 1 ms (default: 20)')
+
     return parser
 
 
@@ -78,7 +82,22 @@ if __name__ == '__main__':
 
         spike_counts = np.load(file_path)
         n_trials, n_units, n_timebins = spike_counts.shape
-        spike_counts = spike_counts.transpose(1, 0, 2).reshape(n_units, n_trials * n_timebins)
+        new_n_timebins = n_timebins // args.bin_size
+        truncated_n_timebins = args.bin_size * new_n_timebins
+
+        if truncated_n_timebins != n_timebins:
+            print(f"Warning: Discarding last {n_timebins % args.bin_size} time bins to make data divisible by bin_size {args.bin_size}.")
+        
+        spike_counts = spike_counts[:, :, :truncated_n_timebins]
+
+        # reshape to group timebins into new bins
+        spike_counts = spike_counts.reshape(n_trials, n_units, new_n_timebins, args.bin_size)
+
+        # calculate the mean across the bin_size dimension (axis=-1)
+        spike_counts = spike_counts.mean(axis=-1)
+
+        # concatenate trials and discretize (firing rate -> estimated spike counts)
+        spike_counts = spike_counts.transpose(1, 0, 2).reshape(n_units, n_trials * new_n_timebins)
         spike_counts = np.ceil(0.02 * spike_counts).astype(np.uint8)
 
         # subject, session identifiers
@@ -88,11 +107,11 @@ if __name__ == '__main__':
         total_elements = np.prod(spike_counts.shape)
 
         # append sessions; if session data is large, divide spike_counts array into smaller chunks
-        if total_elements > 10_000_000:
+        if total_elements > args.token_count_limit:
             n_channels, n_time_bins = spike_counts.shape
-            num_segments = math.ceil(total_elements / 10_000_000)
+            num_segments = math.ceil(total_elements / args.token_count_limit)
             segment_size = math.ceil(n_time_bins / num_segments)
-            print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
+            print(f"Spike count dtype / shape / max / min: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()} / {spike_counts.min()}. Dividing into {num_segments} smaller chunks ...")
             for i in range(num_segments):
                 start_index = i * segment_size
                 end_index = min((i + 1) * segment_size, n_time_bins)
@@ -108,7 +127,7 @@ if __name__ == '__main__':
             subject_list.append(subject_id)
             session_list.append(session_id)
             segment_list.append("segment_0")  # default segment id
-            print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()} (segment_0)")
+            print(f"Spike count dtype / shape / max / min: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()} / {spike_counts.min()} (segment_0)")
             n_tokens += np.prod(spike_counts.shape)
 
     def gen_data():
@@ -125,4 +144,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/wojcik", max_shard_size="1GB", token=True)
+    ds.push_to_hub(args.hf_repo_name, max_shard_size="1GB", token=True)
