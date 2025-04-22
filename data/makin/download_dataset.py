@@ -1,7 +1,7 @@
 import requests
 import subprocess
 
-ACCESS_TOKEN = "XJik5AkQiW6IYe7Qn3SDDbBoNtPRvybZw2Aeh64xOe8Rgglib9p3Vw2kkn4b"
+ACCESS_TOKEN = input("Enter your Zenodo access token:")
 record_id = "3854034"
 
 r = requests.get(f"https://zenodo.org/api/records/{record_id}", params={'access_token': ACCESS_TOKEN})

@@ -1,6 +1,5 @@
 import os
 import math
-import h5py
 import argparse
 import numpy as np
 from datasets import Dataset

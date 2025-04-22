@@ -50,74 +50,12 @@ def extract_subject_session_id(file_path):
     return f"{subdirectory}", f"{filename_without_extension}"
 
 
-def process_mat_files(directory, num_channels=128, bin_size=0.02):
-    """
-    Processes .mat files in a directory, combines spike time data, and bins it.
-
-    Args:
-        directory (str): Path to the directory containing .mat files.
-        bin_size (float): Size of the time bins in seconds.
-
-    Returns:
-        dict: A dictionary where keys are filenames (without .mat) and values are
-              N-by-T numpy arrays representing spike counts in time bins.
-    """
-
-    spike_counts_list, identifier_list = [], []
-
-    for filename in os.listdir(directory):
-        if filename.endswith(".mat"):
-            filepath = os.path.join(directory, filename)
-            mat_data = scipy.io.loadmat(filepath)
-
-            spike_data = []
-            for i in range(num_channels):
-                key = f'Spk_{i:03d}a_sh'
-                if key in mat_data:
-                    spike_data.append(mat_data[key][0])
-                else:
-                    print(f"Warning: Key {key} not found in {filename}")
-                    spike_data.append(np.array([])) #append empty array if channel data is missing.
-
-            # Find the maximum spike time to determine the number of bins
-            max_time = 0
-            for channel_spikes in spike_data:
-                if channel_spikes.size > 0:
-                    max_time = max(max_time, channel_spikes.max())
-
-            num_bins = int(np.ceil(max_time / bin_size))
-            binned_spikes = np.zeros((num_channels, num_bins), dtype=np.uint8)
-
-            for channel_idx, channel_spikes in enumerate(spike_data):
-                if channel_spikes.size > 0:
-                    bin_indices = (channel_spikes / bin_size).astype(int)
-                    bin_indices = bin_indices[bin_indices < num_bins] # Ensure indices are within bounds.
-                    np.add.at(binned_spikes[channel_idx], bin_indices, 1)
-
-            spike_counts_list.append(binned_spikes)
-            identifier_list.append(os.path.splitext(filename)[0])
-
-            print(f"Subject: {os.path.splitext(filename)[0]}; Spike count shape-max: {binned_spikes.shape}, {binned_spikes.max()}")
-
-    def gen_data():
-        for a, b in zip(spike_counts_list, identifier_list):
-            yield {
-                "spike_counts": a,
-                "identifier": b,
-                }
-
-    ds = Dataset.from_generator(gen_data, writer_batch_size=1)
-
-    # push all data to hub
-    ds.push_to_hub("eminorhan/lanzarini", token=True)
-
-
 def get_args_parser():
     parser = argparse.ArgumentParser('Consolidate data in multiple .mat files into a single dataset', add_help=False)
     parser.add_argument('--data_dir', default="data", type=str, help='Data directory')
-    parser.add_argument('--num_channels', default=128, type=int, help='Number of channels in data')
+    parser.add_argument('--hf_repo_name',default="eminorhan/lanzarini",type=str, help='processed dataset will be pushed to this HF dataset repo')
+    parser.add_argument('--token_count_limit',default=10_000_000, type=int, help='sessions with larger token counts than this will be split into chunks (default: 10_000_000)')
     parser.add_argument('--bin_size', default=0.02, type=int, help='Bin size (ms)')
-
     return parser
 
 
@@ -126,6 +64,8 @@ if __name__ == '__main__':
     args = get_args_parser()
     args = args.parse_args()
     print(args)
+
+    NUM_CHANNELS = 128  # number of recorded channels in this dataset
 
     # get all .mat files in the sorted folder
     mat_files = find_mat_files(args.data_dir)
@@ -143,7 +83,7 @@ if __name__ == '__main__':
         mat_data = scipy.io.loadmat(file_path)
 
         spike_data = []
-        for i in range(args.num_channels):
+        for i in range(NUM_CHANNELS):
             key = f'Spk_{i:03d}a_sh'
             if key in mat_data:
                 spike_data.append(mat_data[key][0])
@@ -158,7 +98,7 @@ if __name__ == '__main__':
                 max_time = max(max_time, channel_spikes.max())
 
         num_bins = int(np.ceil(max_time / args.bin_size))
-        spike_counts = np.zeros((args.num_channels, num_bins), dtype=np.uint8)
+        spike_counts = np.zeros((NUM_CHANNELS, num_bins), dtype=np.uint8)
 
         for channel_idx, channel_spikes in enumerate(spike_data):
             if channel_spikes.size > 0:
@@ -173,9 +113,9 @@ if __name__ == '__main__':
         total_elements = np.prod(spike_counts.shape)
 
         # append sessions; if session data is large, divide spike_counts array into smaller chunks
-        if total_elements > 10_000_000:
+        if total_elements > args.token_count_limit:
             n_channels, n_time_bins = spike_counts.shape
-            num_segments = math.ceil(total_elements / 10_000_000)
+            num_segments = math.ceil(total_elements / args.token_count_limit)
             segment_size = math.ceil(n_time_bins / num_segments)
             print(f"Spike count dtype / shape / max: {spike_counts.dtype} / {spike_counts.shape} / {spike_counts.max()}. Dividing into {num_segments} smaller chunks ...")
             for i in range(num_segments):
@@ -210,4 +150,4 @@ if __name__ == '__main__':
     print(f"Number of rows in dataset: {len(ds)}")
 
     # push all data to hub 
-    ds.push_to_hub("eminorhan/lanzarini", max_shard_size="1GB", token=True)
+    ds.push_to_hub(args.hf_repo_name, max_shard_size="1GB", token=True)
