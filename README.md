@@ -4,7 +4,7 @@
 
 # Spiking neural activity data recorded from primates 
 
-~34B uncompressed tokens of ephys data recorded from primates (tokens=units x time bins). Unless otherwise noted, the data consist of spike counts within 20 ms time bins recorded from each unit. 
+~34B uncompressed tokens of spiking neural activity data recorded from primates (tokens=neurons x time bins). Unless otherwise noted, the data consist of spike counts in 20 ms time bins recorded from each neuron. 
 
 The current component datasets and token counts per dataset are as follows:
 
