@@ -10,7 +10,7 @@ The current component datasets and token counts per dataset are as follows:
 
 | Name               | Tokens          | Sessions | Source                                                      | Details
 |:-------------------|----------------:|---------:|:------------------------------------------------------------|:-----------------------------------------
-| Xiao               | 17,695,820,059  | 679      | [dandi:000628](https://dandiarchive.org/dandiset/000628)    | [link](data/xiao/README.md)
+| Xiao               | 17,695,820,059  | 679      | [dandi:000628](https://dandiarchive.org/dandiset/000628)    | [link](data/xiao)
 | Neupane (PPC)      | 7,899,849,087   | 10       | [dandi:001275](https://dandiarchive.org/dandiset/001275)    | [link](data/neupane-ppc/README.md)
 | Willett            | 1,796,119,552   | 44       | [dryad:x69p8czpq]( https://doi.org/10.5061/dryad.x69p8czpq) | [link](data/willett/README.md)
 | Churchland         | 1,278,669,504   | 10       | [dandi:000070](https://dandiarchive.org/dandiset/000070)    | [link](data/churchland/README.md)
