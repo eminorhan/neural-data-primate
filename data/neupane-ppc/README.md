@@ -1,4 +1,6 @@
-Neupane (PPC) dataset. Dataset URL: https://dandiarchive.org/dandiset/001275
+Neupane (PPC) dataset. 
+
+**Dataset URL:** https://dandiarchive.org/dandiset/001275
 
 To download the data and create the corresponding HF dataset, *e.g.*:
 ```python
@@ -8,6 +10,23 @@ python create_dataset.py --hf_repo_name "eminorhan/neupane-ppc" --token_count_li
 ```
 where `hf_repo_name` is the HF datasets repository name where the processed data will be pushed to, `token_count_limit` is the maximum token count per dataset row (sessions with larger token counts than this will be split into smaller chunks), and `bin_size` is the bin size in seconds for aggregating spike counts (default: 20 ms).
 
-Token count: 7,899,849,087
+**Token count:** 7,899,849,087
 
-HF repo: https://huggingface.co/datasets/eminorhan/neupane-ppc
+**HF repo:** https://huggingface.co/datasets/eminorhan/neupane-ppc
+
+**Recorded area & stimulus, task, or behavior:** Recordings from macaque posterior parietal cortex during a mental navigation task.
+
+**Paper URL:** https://www.nature.com/articles/s41586-024-07557-z
+
+```
+@article{neupane2024,
+  title={Mental navigation in the primate entorhinal cortex},
+  author={Neupane, Sujaya and Fiete, Ila and Jazayeri, Mehrdad},
+  journal={Nature},
+  volume={630},
+  number={8017},
+  pages={704--711},
+  year={2024},
+  publisher={Nature Publishing Group UK London}
+}
+```
