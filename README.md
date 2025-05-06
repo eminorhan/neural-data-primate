@@ -1,12 +1,11 @@
-<p align="left">
-    <a href="https://huggingface.co/datasets/eminorhan/neural-bench-primate"><img alt="neural-bench-primate" src="https://img.shields.io/badge/HF_datasets-neural_bench_primate-blue"></a>
-</p>
+![Static Badge](https://img.shields.io/badge/HF_datasets-neural_pile_primate-blue) 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Spiking neural activity data recorded from primates 
 
 ~34B uncompressed tokens of spiking neural activity data recorded from primates (tokens=neurons x time bins). Unless otherwise noted, the data consist of spike counts in 20 ms time bins recorded from each neuron. 
 
-This repository contains tools and instructions for building the dataset from scratch. The actual final dataset is hosted at [this](https://huggingface.co/datasets/eminorhan/neural-bench-primate) public HF repository.
+This repository contains tools and instructions for building the dataset from scratch. The actual final dataset is hosted at [this](https://huggingface.co/datasets/eminorhan/neural-pile-primate) public HF repository.
 
 The current component datasets and token counts per dataset are as follows:
 
