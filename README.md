@@ -1,4 +1,4 @@
-![Static Badge](https://img.shields.io/badge/HF_datasets-neural_pile_primate-blue) 
+[![Static Badge](https://img.shields.io/badge/🤗_datasets-neural_pile_primate-blue)](https://huggingface.co/datasets/eminorhan/neural-pile-primate)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Spiking neural activity data recorded from primates 
