@@ -1,5 +1,3 @@
-Rajalingham dataset. 
-
 **Dataset URL:** https://zenodo.org/records/13952210
 
 We manually download the data from the dataset URL above. Specifically, we use the `mahler_hand_dmfc_dataset_50ms.mat` and `perle_hand_dmfc_dataset_50ms.mat` data files for creating the dataset. Put these in the same directory as the `create_dataset.py` file. Then, to create the corresponding HF dataset, simply run *e.g.*:

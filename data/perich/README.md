@@ -1,5 +1,3 @@
-Perich dataset. 
-
 **Dataset URL:** https://dandiarchive.org/dandiset/000688
 
 To download the data and create the corresponding HF dataset, *e.g.*:

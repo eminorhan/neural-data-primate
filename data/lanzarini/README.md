@@ -1,5 +1,3 @@
-Lanzarini dataset. 
-
 **Dataset URL:** https://osf.io/82jfr
 
 Dataset downloaded manually from above URL.

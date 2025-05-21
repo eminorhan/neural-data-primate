@@ -1,5 +1,3 @@
-Willett dataset. 
-
 **Dataset URL:** https://datadryad.org/stash/dataset/doi:10.5061/dryad.x69p8czpq
 
 To download the data, go to the URL above and download `diagnosticBlocks.tar.gz`, `sentences.tar.gz`, and `tuningTasks.tar.gz` (we use all available data). Extract them inside a new folder called `data`. Then, to create the corresponding HF dataset, run *e.g.*:

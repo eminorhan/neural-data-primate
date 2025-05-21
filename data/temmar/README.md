@@ -1,5 +1,3 @@
-Temmar dataset. 
-
 **Dataset URL:** https://dandiarchive.org/dandiset/001201
 
 To download the data and create the corresponding HF dataset, *e.g.*:

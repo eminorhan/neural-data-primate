@@ -1,5 +1,3 @@
-Even-Chen dataset. 
-
 **Dataset URL:** https://dandiarchive.org/dandiset/000121
 
 To download the data and create the corresponding HF dataset, *e.g.*:

@@ -34,7 +34,7 @@ def concatenate_hf_datasets_and_push(repo_list, new_repo_name, test_size):
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Merge multiple datasets into a single repository', add_help=False)
-    parser.add_argument('--hf_repo_name', default="eminorhan/neural-bench-primate", type=str, help='merged dataset will be pushed to this HF dataset repo')
+    parser.add_argument('--hf_repo_name', default="eminorhan/neural-pile-primate", type=str, help='merged dataset will be pushed to this HF dataset repo')
     parser.add_argument('--test_size', default=0.01, type=float, help='fraction of data to be held out for test split (default: 0.01)')
     return parser
 

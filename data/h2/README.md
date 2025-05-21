@@ -1,5 +1,3 @@
-H2 dataset. 
-
 **Dataset URL:** https://dandiarchive.org/dandiset/000950
 
 To download the data and create the corresponding HF dataset, *e.g.*:

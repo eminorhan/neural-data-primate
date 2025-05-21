@@ -1,5 +1,3 @@
-Neupane (PPC) dataset. 
-
 **Dataset URL:** https://dandiarchive.org/dandiset/001275
 
 To download the data and create the corresponding HF dataset, *e.g.*:

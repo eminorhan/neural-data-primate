@@ -1,5 +1,3 @@
-Wojcik dataset. 
-
 **Dataset URL:** https://doi.org/10.5061/dryad.c2fqz61kb
 
 Dataset downloaded manually from above URL.
