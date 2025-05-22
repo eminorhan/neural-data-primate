@@ -45,6 +45,26 @@ The combined dataset takes up about 6 GB when stored as `.parquet` files and rou
 ## Merging the component datasets into a single dataset
 Once we have created the individual component datasets, we merge them into a single dataset with the `merge_datasets.py` script. This also shuffles the combined dataset, creates a separate test split, and pushes the dataset to the HF datasets hub. If you would like to add more datasets to the mix, simply add their HF dataset repository names to the `repo_list` in `merge_datasets.py`.
 
+### Note:
+Running `merge_datasets.py` successfully requires a patch in the `huggingface_hub` library (as of version `0.29.1`; I haven't tested newer versions). The HF `datasets` library doesn't do retries while loading datasets from the hub (`load_dataset`) or when pushing them to the hub (`push_to_hub`). This almost always results in connection errors for large datasets in my experience, aborting the loading or pushing of the dataset. The patch involves adding a "retry" functionality to `huggingface_hub`'s default session backend factory. Specifically, you need to update the `_default_backend_factory()` function in `huggingface_hub/utils/_http.py` with:
+```python
+from requests.adapters import HTTPAdapter, Retry
+
+...
+
+def _default_backend_factory() -> requests.Session:
+    session = requests.Session()
+    retries = Retry(total=20, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
+    if constants.HF_HUB_OFFLINE:
+        session.mount("http://", OfflineAdapter(max_retries=retries))
+        session.mount("https://", OfflineAdapter(max_retries=retries))
+    else:
+        session.mount("http://", UniqueRequestIdAdapter(max_retries=retries))
+        session.mount("https://", UniqueRequestIdAdapter(max_retries=retries))
+    return session
+```  
+or something along these lines (you can play with the `Retry` settings). This will prevent the premature termination of the job when faced with connection issues. 
+
 ## Visualizing the datasets
 `visualize_datasets.py` provides some basic functionality to visualize random samples from the datasets, *e.g.*:
 ```python
